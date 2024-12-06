@@ -1,0 +1,31 @@
+type Query {
+  data(title: String, pageToken: String, limit: Int): DataPage!
+  aggregateSubcategory(subcategory: String!): [AggregatedCategory!]!
+}
+
+type DataPage {
+  data: [Data!]!
+  nextPageToken: String
+}
+
+type AggregatedCategory {
+  category: Category!
+  count: Int
+}
+
+type Category {
+  subcategory: String!
+}
+
+type MultiLanguageTitle {
+  ro: String!
+  ru: String!
+}
+
+type Data {
+  id: String!
+  categories: Category!
+  title: MultiLanguageTitle!
+  type: String!
+  posted: Float!
+}

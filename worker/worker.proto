@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+option go_package = "simpals_task/worker";
+
+package worker;
+
+service Worker {
+    rpc GetStreamOfData (DataFilter) returns (stream Data) {}
+}
+
+message DataFilter {
+    repeated string id = 1;
+}
+
+// Example of data that is transpiled to message Categories
+//   "categories": {
+//    "subcategory": "1407"
+//   },
+message Categories {
+    string subcategory = 1;
+}
+
+// Example of data that is transpiled to message MultiLanguageTitle
+//   "title": {
+//    "ro": "Teren sub constructie in apropiere de Vadul lui Voda",
+//    "ru": "Teren sub constructie in apropiere de Vadul lui Voda"
+//   },
+message MultiLanguageTitle {
+    string ro = 1;
+    string ru = 2;
+}
+
+// Example of data that is transpiled to message Data
+// {
+//   "_id": "38118545",
+//   "categories": {
+//    "subcategory": "1407"
+//   },
+//   "title": {
+//    "ro": "Teren sub constructie in apropiere de Vadul lui Voda",
+//    "ru": "Teren sub constructie in apropiere de Vadul lui Voda"
+//   },
+//   "type": "standard",
+//   "posted": 1486556302.101039
+// },
+message Data {
+    // This `_id` is neccessary as trying to do `string id [json_name = "_id"] = 1;`
+    // will be ignored for golang.json.Decoder and we must either:
+    // 1. Keep name not `_id` and put mapping struct into server code and maintain
+    //     two separate instances of the same struct in the code
+    // OR
+    // 2. Accept `_id` and `XId` name of the field because that way `decoder.Decode`
+    //     will happily accept and decode our struct
+    // I choose second (2.) path as it leaves us with only one place where struct
+    // need to be changed.
+    // Using protojson package for golang is not possible due to the need of using
+    // some sort of step decoder
+    string _id = 1;
+    Categories categories = 2;
+    MultiLanguageTitle title = 3;
+    string type = 4;
+    double posted = 5;
+}
+
+service Storage {
+    rpc GetStreamOfDataFromElasticSearch(DataSearch) returns (stream Data) {}
+    rpc GetAggregatedData(AggregatedDataSearch) returns (AggregatedDataRespone) {}
+}
+
+message DataSearch {
+    string title = 1;
+    uint64 limit = 2;
+    string page_token = 3;
+}
+
+message AggregatedDataSearch {
+    Categories categories = 1;
+}
+
+message AggregatedDataRespone {
+    repeated AggregatedData data =1;
+}
+
+message AggregatedData {
+    Categories categories = 1;
+    uint64 count = 2;
+}

@@ -1,0 +1,64 @@
+version: '3.7'
+services:
+  worker_client:
+    build:
+      context: .
+      dockerfile: worker_client/Dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      worker_server:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - WORKER_SERVER_URL=worker_server:50050
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=:50051"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: worker_client-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  worker_server:
+    build:
+      context: .
+      dockerfile: worker_server/Dockerfile
+    ports:
+      - "50050:50050"
+    volumes:
+      - ./worker_server/data:/app/data/
+    environment:
+      - JSON_FILE=/app/data/data.json
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=:50050"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  graphql_api:
+    build:
+      context: .
+      dockerfile: graphql_api/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      worker_client:
+        condition: service_healthy
+    environment:
+      - GRPC_SERVER_URL=worker_client:50051
