@@ -30,7 +30,7 @@ func (s *server) GetStreamOfData(req *pb.DataFilter, stream pb.Worker_GetStreamO
 		filterIds[idToFilter] = true
 	}
 	defaultJsonFilePath := env.JSONFilepath()
-	dataChannel, err := reader.StartJsonDecoder(defaultJsonFilePath)
+	dataChannel, err := reader.StartJsonDecoder[pb.Data](defaultJsonFilePath)
 	if err != nil {
 		return fmt.Errorf("reader.LaunchJSONDecoderOn: %w", err)
 	}

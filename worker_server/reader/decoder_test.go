@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	pb "worker"
 	"worker_server/reader"
 )
 
@@ -22,7 +23,7 @@ func TestStartJsonDecoder_ValidFile(t *testing.T) {
 
 	tmpfile.Close()
 
-	dataChannel, err := reader.StartJsonDecoder(tmpfile.Name(), reader.WithSuppressedLogging())
+	dataChannel, err := reader.StartJsonDecoder[pb.Data](tmpfile.Name(), reader.WithSuppressedLogging())
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -57,7 +58,7 @@ func TestStartJsonDecoder_ValidFileWithThreeData(t *testing.T) {
 
 	tmpfile.Close()
 
-	dataChannel, err := reader.StartJsonDecoder(tmpfile.Name(), reader.WithSuppressedLogging())
+	dataChannel, err := reader.StartJsonDecoder[pb.Data](tmpfile.Name(), reader.WithSuppressedLogging())
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -80,7 +81,7 @@ func TestStartJsonDecoder_ValidFileWithThreeData(t *testing.T) {
 }
 
 func TestStartJsonDecoder_InvalidFile(t *testing.T) {
-	_, err := reader.StartJsonDecoder("nonexistent.json")
+	_, err := reader.StartJsonDecoder[pb.Data]("nonexistent.json")
 	if err == nil {
 		t.Fatal("Expected error for nonexistent file, got nil")
 	}
